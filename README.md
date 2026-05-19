@@ -1,174 +1,177 @@
 # good-habits-skill
 
-> 一个为 AI Agent（Claude / Claude Code 等）注入「好习惯」的可加载 Skill。让 Agent 在开发场景中自然遵循规范工作流，并通过本地 Q&A 档案缓解**每开一个新对话就丢失上下文**的窘况。
+[中文版 / Chinese README](./README_zh.md)
+
+> A loadable Skill that injects "good working habits" into AI Agents (Claude / Claude Code etc.). It makes the Agent naturally follow a disciplined workflow in development scenarios, and uses a local Q&A archive to mitigate the **"every new chat starts from amnesia"** problem.
 
 ---
 
-## 为什么需要这个 Skill？
+## Why does this Skill exist?
 
-LLM Agent 的会话级上下文是**易失**的：
+The session-level context of an LLM Agent is **volatile**:
 
-- 关掉 IDE 重开 → 上下文没了。
-- 切到新对话 → 上下文没了。
-- 用户被迫每次重新交代："我们之前是这样定的……" "上次踩过 XXX 坑……"
+- Close the IDE and reopen → context gone.
+- Switch to a new chat → context gone.
+- The user is forced to re-explain every time: "We previously decided …", "Last time we got bitten by XXX …".
 
-这不只是体验问题，更直接影响产出质量——Agent 看不到历史决策，就会重复造轮子、推翻已经定过的方案、踩同样的坑。
+This is not just a UX issue — it directly hurts output quality. Without past decisions in view, the Agent reinvents wheels, overturns settled designs, and steps on the same rakes again.
 
-**本 Skill 的解决思路是让 Agent 自己写工作日志，下次新会话自己回看。** 整个机制纯本地、零外部依赖，工作日志就是项目里的几个 Markdown 文件，人和 Agent 都能直接读、直接编辑、随仓库一起走。
+**This Skill's approach: let the Agent write its own work log, and read it back at the start of the next session.** The whole mechanism is purely local with zero external dependencies — the work log is just a few Markdown files inside the project, readable and editable by both humans and Agents, and travels with the repo.
 
 ---
 
-## 六大习惯一览
+## The six habits at a glance
 
-| # | 习惯名 | 触发时机 | 一句话描述 |
+| # | Habit | When it triggers | One-line description |
 | - | --- | --- | --- |
-| 1 | 先出方案再动手 | 用户要改代码 / 给了 PRD | 先出 Markdown 实施方案让用户 Review，**等明确通过**再动手 |
-| 2 | 多方案对比 | 某功能点存在多种实现 | 用表格列出所有方案的优劣，让用户拍板 |
-| 3 | 自动记录 Q&A | 每次代码改动完成后 | 在 `.good-habits/YYYY-MM-DD-HH-mm-ss.md` 落盘 Q&A |
-| 4 | 二方包发布顺序提示 | 涉及二方包 / SDK / starter 版本联动 | 用表格说清依赖关系 + Maven 标准引用片段 |
-| 5 | 新对话启动时回顾历史 | 新会话第一次涉及本项目的实质请求 | 主动扫 `.good-habits/` 最近若干条记录，恢复上下文再回答 |
-| 6 | Java 注释规范 | 新建 Java 类/枚举/接口/方法/静态变量/实例变量 | 按 `@author 鹤童 / @desc / @date` 等固定格式补全 Javadoc |
+| 1 | Plan first, code second | User asks for code change / hands over a PRD | Produce a Markdown implementation plan for review first; **wait for explicit approval** before coding |
+| 2 | Multi-option comparison | A feature has multiple viable implementations | List pros and cons of every option in a table; let the user pick |
+| 3 | Auto-record Q&A | After every code change | Persist a Q&A entry to `.good-habits/YYYY-MM-DD-HH-mm-ss.md` |
+| 4 | Two-party publish ordering reminder | Anything involving 2nd-party packages / SDKs / starter version coupling | Spell out dependency order in a table + a standard Maven snippet |
+| 5 | Recap history at session start | First substantive request about this project in a new session | Proactively scan the latest entries in `.good-habits/` to restore context before answering |
+| 6 | Java comment standard | Creating a Java class / enum / interface / method / static field / instance field | Fill in Javadoc per the fixed `@author 鹤童 / @desc / @date` format |
 
-> **习惯三 + 习惯五 是一对**：写入侧负责沉淀知识，读取侧负责跨会话恢复——这是本 Skill 缓解"开新对话即失忆"问题的核心机制。
+> **Habits 3 and 5 form a pair**: the writer side accumulates knowledge, the reader side restores context across sessions — this is the core mechanism by which the Skill alleviates the "amnesia on new chat" problem.
 
 ---
 
-## 目录结构
+## Directory layout
 
 ```
 good-habits-skill/
-├── SKILL.md                          # Skill 主入口（含 YAML frontmatter + 五大习惯的触发条件与行为规范）
-├── README.md                         # 你正在看的这份文档
+├── SKILL.md                          # Skill entry point (YAML frontmatter + triggers/behaviors for the six habits)
+├── README.md                         # This document (English, default)
+├── README_zh.md                      # Chinese version
 ├── scripts/
-│   ├── create-qa-record.sh           # 习惯三：Bash 版自动建档脚本
-│   └── create-qa-record.py           # 习惯三：Python 版自动建档脚本（无 Bash 环境时使用）
+│   ├── create-qa-record.sh           # Habit 3: Bash version of the auto-record script
+│   └── create-qa-record.py           # Habit 3: Python version (when Bash is unavailable)
 ├── references/
-│   ├── plan-template.md              # 习惯一：实施方案模板
-│   ├── comparison-template.md        # 习惯二：多方案对比模板
-│   ├── maven-release-order.md        # 习惯四：二方包发布顺序详细参考
-│   └── java-comment-standard.md      # 习惯六：Java 注释格式样例与自查清单
+│   ├── plan-template.md              # Habit 1: implementation plan template
+│   ├── comparison-template.md        # Habit 2: multi-option comparison template
+│   ├── maven-release-order.md        # Habit 4: detailed reference on 2nd-party publish order
+│   └── java-comment-standard.md      # Habit 6: Java comment samples and self-check list
 └── assets/
-    └── qa-template.md                # 习惯三：Q&A 记录的 Markdown 模板
+    └── qa-template.md                # Habit 3: Markdown template for a Q&A entry
 ```
 
 ---
 
-## 怎么用
+## How to use
 
-### 1. 把 Skill 加载到你的 Agent
+### 1. Load the Skill into your Agent
 
-将本目录放到 Agent 可发现 Skill 的位置（具体路径取决于宿主，例如 Claude Code 的 `~/.claude/skills/` 或项目级 `.claude/skills/`）。Agent 在启动时会读取 `SKILL.md` 的 frontmatter，根据 `description` 决定何时调用。
+Place this directory wherever your Agent discovers Skills (the exact path depends on the host — for example, Claude Code's `~/.claude/skills/` or the project-level `.claude/skills/`). On startup, the Agent reads the `SKILL.md` frontmatter and uses the `description` to decide when to invoke it.
 
-### 2. 正常和 Agent 协作
+### 2. Just collaborate normally
 
-加载完成后，**用户什么都不用做**——Agent 会在以下时机自动行动：
+Once loaded, **the user does nothing extra** — the Agent acts at these moments automatically:
 
-- 你提需求 → Agent 先给方案让你 Review（习惯一）。
-- 多种实现 → Agent 列表格让你选（习惯二）。
-- 改完代码 → Agent 自动写 Q&A 落盘（习惯三）。
-- 问二方包 → Agent 给依赖表 + Maven 片段（习惯四）。
-- 你开新对话进入项目 → Agent 先回看 `.good-habits/` 再答（习惯五）。
-- 写 Java 代码 → Agent 自动按规范格式落 Javadoc 与注释（习惯六）。
+- You state a requirement → Agent gives a plan for you to review (Habit 1).
+- Multiple implementations exist → Agent lists them in a table for you to choose (Habit 2).
+- Code change finished → Agent writes a Q&A entry to disk (Habit 3).
+- 2nd-party package question → Agent provides a dependency table + Maven snippet (Habit 4).
+- You start a new chat about the project → Agent reads `.good-habits/` first, then answers (Habit 5).
+- You write Java code → Agent automatically lays down Javadoc/comments per the standard (Habit 6).
 
-### 3. 项目里多了 `.good-habits/`，怎么办？
+### 3. A `.good-habits/` directory appeared in my project — what now?
 
-第一次触发习惯三时，Agent 会在你的项目根目录创建 `.good-habits/`。**是否纳入版本管理由你决定**：
+The first time Habit 3 triggers, the Agent creates `.good-habits/` in your project root. **Whether to put it under version control is up to you**:
 
-- **纳入仓库**：团队成员（包括他们的 Agent）共享同一份项目记忆，适合多人协作项目。
-- **加 `.gitignore`**：仅个人本地使用，避免污染历史。
+- **Commit it**: team members (and their Agents) share the same project memory — suitable for multi-developer projects.
+- **Add to `.gitignore`**: personal/local use only — keeps history clean.
 
-Agent 不会替你做这个决定，第一次创建时会主动询问一次。
+The Agent will not make this choice for you; on first creation it asks once.
 
-### 4. 手动调用脚本（可选）
+### 4. Manual script invocation (optional)
 
-`scripts/create-qa-record.sh` 也支持手工调用：
+`scripts/create-qa-record.sh` also supports manual invocation:
 
 ```bash
 ./scripts/create-qa-record.sh /path/to/your/project \
-  "增加登录功能" \
-  "JWT + Redis 缓存" \
-  "src/auth.ts: 新增登录接口" \
-  "需要在生产环境配置 JWT_SECRET"
+  "Add login feature" \
+  "JWT + Redis cache" \
+  "src/auth.ts: new login endpoint" \
+  "Need to configure JWT_SECRET in production"
 ```
 
-会在 `/path/to/your/project/.good-habits/` 下生成一个时间戳命名的 Markdown 文件，并把绝对路径打印到 stdout。Python 版同理：
+This creates a timestamp-named Markdown file under `/path/to/your/project/.good-habits/` and prints the absolute path to stdout. The Python version works the same way:
 
 ```bash
 python3 scripts/create-qa-record.py /path/to/your/project \
-  --question "增加登录功能" \
-  --solution "JWT + Redis 缓存" \
-  --files "src/auth.ts: 新增登录接口" \
-  --notes "需要在生产环境配置 JWT_SECRET"
+  --question "Add login feature" \
+  --solution "JWT + Redis cache" \
+  --files "src/auth.ts: new login endpoint" \
+  --notes "Need to configure JWT_SECRET in production"
 ```
 
 ---
 
-## Q&A 记录文件长什么样
+## What does a Q&A record file look like?
 
-每次代码改动后，`.good-habits/` 下会多一个文件，例如 `2026-05-14-15-32-08.md`：
+After every code change, a new file appears under `.good-habits/`, e.g. `2026-05-14-15-32-08.md`:
 
 ```markdown
-# Q&A 记录 - 2026-05-14-15-32-08
+# Q&A Record - 2026-05-14-15-32-08
 
-> 由 good-habits-skill 自动生成
+> Auto-generated by good-habits-skill
 
-## 用户问题
-增加登录功能，要求支持账号密码 + 短信验证码两种方式。
+## User Question
+Add login functionality, supporting both account-password and SMS-code login.
 
-## 实现方案
-基于 JWT 的鉴权 + Redis 短信码缓存。前端拆为 LoginForm / SmsLoginForm 两个组件。
+## Implementation
+JWT-based auth + Redis-cached SMS codes. Frontend split into two components: LoginForm / SmsLoginForm.
 
-## 修改的文件及内容摘要
-- src/auth/jwt.ts: 新增 issueToken / verifyToken
-- src/auth/sms.ts: 新增短信验证码发送与校验
-- src/pages/Login.tsx: 拆分为两种登录方式
+## Files Changed (summary)
+- src/auth/jwt.ts: added issueToken / verifyToken
+- src/auth/sms.ts: added SMS code dispatch and verification
+- src/pages/Login.tsx: split into two login modes
 
-## 备注
-- 需在生产环境配置 JWT_SECRET 与短信网关的 AK/SK。
-- 短信码 TTL 暂定 5 分钟，待运营反馈后调整。
+## Notes
+- JWT_SECRET and SMS gateway AK/SK must be configured in production.
+- SMS code TTL tentatively 5 minutes; revisit after ops feedback.
 ```
 
-下一次新对话时，Agent 会自动看到这些信息，无需你重复交代。
+In the next chat, the Agent automatically sees this — you don't have to re-explain.
 
 ---
 
-## 与平台级 Memory 的关系
+## Relationship with platform-level Memory
 
-如果你的 Agent 客户端（如 Claude Code）已经启用了平台级 memory 功能，本 Skill 与之**并行不悖**：
+If your Agent client (such as Claude Code) already enables platform-level memory, this Skill **runs in parallel without conflict**:
 
-| 维度 | 平台 Memory | `.good-habits/`（本 Skill） |
+| Dimension | Platform Memory | `.good-habits/` (this Skill) |
 | --- | --- | --- |
-| 颗粒度 | 跨项目，关于"用户" | 单项目，关于"工作流水" |
-| 存储位置 | 平台账户下 | 项目仓库内 |
-| 可见性 | 仅本人 | 团队（若纳入版本管理） |
-| 内容性质 | 用户画像 / 偏好 / 长期共识 | 需求 / 决策 / 改动 / 踩坑 |
-| 是否随项目走 | 否 | 是 |
+| Granularity | Cross-project, about "the user" | Single project, about "the work stream" |
+| Storage | Platform account | Inside the project repo |
+| Visibility | Yourself only | Team (if committed) |
+| Content nature | User profile / preferences / long-term consensus | Requirements / decisions / changes / pitfalls |
+| Travels with the project | No | Yes |
 
-简单说：**Memory 记住"你是谁、你怎么工作"；`.good-habits/` 记住"这个项目发生过什么"。**
+In short: **Memory remembers "who you are and how you work"; `.good-habits/` remembers "what happened in this project".**
 
 ---
 
 ## FAQ
 
-**Q：Agent 真的会自动遵守这些习惯吗？还是要我每次提醒？**
-A：Skill 加载后，Agent 应当主动判断触发条件并执行。如果发现 Agent 没遵守，最常见的原因是 Skill 没被正确加载，或者宿主环境对 Skill 的支持有限——可以试着在对话开头显式说"请遵循 good-habits-skill"。
+**Q: Will the Agent really follow these habits automatically? Or do I have to remind it every time?**
+A: Once the Skill is loaded, the Agent should proactively detect the trigger conditions and act. If you find it not following them, the most common cause is that the Skill was not loaded properly, or the host has limited Skill support — try saying "please follow good-habits-skill" at the start of the chat.
 
-**Q：`.good-habits/` 越积越多怎么办？**
-A：保持原样即可。Agent 默认只读最近 3~5 条；老记录作为"项目档案"留底，人也能随时翻阅。如果觉得太大，定期归档到子目录（如 `.good-habits/2025/`）即可，不影响 Skill 工作。
+**Q: `.good-habits/` keeps growing — what should I do?**
+A: Leave it as is. By default the Agent only reads the latest 3–5 entries; older entries stay as a "project archive" that humans can browse anytime. If it gets too large, archiving them to a subdirectory (e.g. `.good-habits/2025/`) is fine and won't affect the Skill.
 
-**Q：能否关掉某个习惯？**
-A：可以。直接在 `SKILL.md` 中删掉对应章节，或者在使用时明确告诉 Agent："这次跳过习惯一直接动手"。
+**Q: Can I disable a particular habit?**
+A: Yes. Either remove the relevant section in `SKILL.md`, or just tell the Agent at runtime: "skip Habit 1 this time, just code directly".
 
-**Q：习惯五会不会拖慢响应？每次新对话都要先读一堆文件。**
-A：只在**新对话的第一次实质请求**触发一次，且只读最近 3~5 条。代价远小于"用户重新交代背景"的成本。
+**Q: Won't Habit 5 slow down responses, since every new chat reads a bunch of files first?**
+A: It only triggers **once per new chat, on the first substantive request**, and only the latest 3–5 entries are read. The cost is far less than re-explaining background to the Agent.
 
 ---
 
-## 版本
+## Versions
 
-- **v1.2.0**（2026-05-18）：新增习惯六（Java 注释规范），覆盖类/枚举/接口/方法/静态变量/实例变量/方法内变量七类元素的注释格式约束。
-- **v1.1.0**（2026-05-14）：新增习惯五（会话启动回顾），明确"项目记忆层"定位。
-- **v1.0.0**：初版，含习惯一~四。
+- **v1.2.0** (2026-05-18): added Habit 6 (Java comment standard), covering the comment-format constraints for seven element categories: classes / enums / interfaces / methods / static fields / instance fields / method-local variables.
+- **v1.1.0** (2026-05-14): added Habit 5 (session-start recap); clarified the "project memory layer" positioning.
+- **v1.0.0**: initial release with Habits 1–4.
 
 ## License
 
