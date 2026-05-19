@@ -1,0 +1,40 @@
+{
+  "skill_name": "good-habits-skill",
+  "evals": [
+    {
+      "id": 0,
+      "name": "habit1-plan-before-action",
+      "prompt": "在 src/ 下加一个用户登录接口，用 Express + JWT，要支持账号密码登录，返回 token。前端会用这个接口走鉴权。帮我把这个功能补上，记得加单测。",
+      "expected_output": "Agent 应该先输出一份 Markdown 实施方案（含需求理解、改动点、步骤、风险、验证方式），并显式询问用户是否通过 Review，而不是直接动手写代码。",
+      "files": ["fixtures/eval-0-plan/"]
+    },
+    {
+      "id": 1,
+      "name": "habit2-multi-solution-comparison",
+      "prompt": "我们后端要做一个分布式 ID 生成器，业务期望毫秒级生成、单机 10w QPS、跨机房部署。团队里有人提雪花算法（Snowflake）、有人提 Redis incr、有人想直接用 UUID v4。帮我们做下选型。",
+      "expected_output": "Agent 应该输出 Markdown 表格对比多个方案的优缺点和适用场景，给出推荐及理由，并显式让用户选择。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "habit4-maven-release-order",
+      "prompt": "二方包 payroll-boot-starter-util 加了几个新工具类，要从 1.1.0 升到 1.2.0。下游有 service-order 和 service-pay 两个项目都引用了它，pom.xml 里都用 ${cn-payroll.starter.version} 这个 property 管理版本号。完整的升级 / 发布步骤怎么搞？",
+      "expected_output": "Agent 应该输出依赖关系表 + 自底向上的发布顺序 + 标准 Maven dependency 引用片段（含 properties 用法），并提醒发布前检查事项。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "habit5-restore-context-on-session-start",
+      "prompt": "我刚接手这个项目，先帮我了解下最近做了哪些事，然后给我加一个 GET /healthz 健康检查接口。",
+      "expected_output": "Agent 应该先扫描 .good-habits/ 目录、读最近若干条 Q&A 记录、向用户做一段简短的上下文回顾，再给出实施方案让用户 Review。",
+      "files": ["fixtures/eval-3-restore/"]
+    },
+    {
+      "id": 4,
+      "name": "habit3-auto-qa-logging",
+      "prompt": "帮我把 README.md 第一行的 'Hellow World' 改成 'Hello World'，这是个 typo。",
+      "expected_output": "Agent 完成 typo 修复后，必须在项目根目录的 .good-habits/ 下创建一份带时间戳的 Markdown Q&A 记录，并在结束时告知用户文件路径。",
+      "files": ["fixtures/eval-4-qa-log/"]
+    }
+  ]
+}
